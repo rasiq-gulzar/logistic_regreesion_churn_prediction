@@ -3,171 +3,473 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Data Input Form</title>
+    <title>Customer Churn Prediction</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --background-color: #f8fafc;
-            --text-color: #1e293b;
-            --border-color: #cbd5e1;
+            --ink: #14213d;
+            --ink-soft: #55607a;
+            --paper: #f3f5f9;
+            --surface: #ffffff;
+            --line: #d9dee8;
+            --brand: #1f4fd8;
+            --brand-dark: #173ba3;
+            --stay: #0f7b5f;
+            --stay-bg: #e6f5ef;
+            --leave: #b42318;
+            --leave-bg: #fdecea;
+            --radius: 10px;
         }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.5;
-            padding: 2rem;
+            margin: 0;
+            font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: var(--paper);
+            color: var(--ink);
+            line-height: 1.55;
+        }
+
+        .topbar {
+            background: var(--ink);
+            color: #fff;
+            padding: 1rem 1.5rem;
+        }
+        .topbar-inner {
+            max-width: 1120px;
+            margin: 0 auto;
             display: flex;
-            justify-content: center;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
-        .form-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            width: 100%;
-            max-width: 600px;
+        .topbar strong { font-size: 1.1rem; font-weight: 600; }
+        .topbar span { color: #aab4cc; font-size: 0.9rem; }
+
+        main {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 3rem;
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+            gap: 1.75rem;
+            align-items: start;
         }
-        h2 {
-            margin-top: 0;
-            margin-bottom: 1.5rem;
-            color: var(--primary-color);
+
+        .intro { grid-column: 1 / -1; max-width: 62ch; }
+        .intro h1 { margin: 0 0 0.4rem; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.01em; }
+        .intro p { margin: 0; color: var(--ink-soft); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
         }
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 0.625rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 1rem;
-            background-color: #fff;
-        }
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
+
+        form.card { padding: 1.75rem; }
+
+        fieldset { border: 0; margin: 0 0 1.75rem; padding: 0; }
+        legend {
+            font-size: 1.05rem;
             font-weight: 600;
-            cursor: pointer;
+            padding: 0 0 0.75rem;
+            margin-bottom: 1rem;
             width: 100%;
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--line);
         }
-        button:hover {
-            opacity: 0.9;
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+
+        .field label { display: block; font-weight: 500; font-size: 0.9rem; margin-bottom: 0.35rem; }
+        .field .hint { display: block; font-size: 0.8rem; color: var(--ink-soft); margin-top: 0.3rem; }
+
+        input, select {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            font: inherit;
+            color: var(--ink);
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .prediction-output {
-            text-align: center;
-            color: var(--primary-color);
-            margin-top: 1.5rem;
-            border-top: 2px dashed var(--border-color);
-            padding-top: 1.5rem;
+        input:hover, select:hover { border-color: #aeb7c9; }
+        input:focus-visible, select:focus-visible, button:focus-visible {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(31, 79, 216, 0.25);
+        }
+        .field.invalid input, .field.invalid select { border-color: var(--leave); }
+        .error-msg { display: none; color: var(--leave); font-size: 0.8rem; margin-top: 0.3rem; }
+        .field.invalid .error-msg { display: block; }
+
+        .submit {
+            width: 100%;
+            padding: 0.85rem 1.25rem;
+            font: inherit;
+            font-weight: 600;
+            color: #fff;
+            background: var(--brand);
+            border: 1px solid var(--brand);
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: background 0.15s;
+        }
+        .submit:hover { background: var(--brand-dark); }
+        .submit:disabled { opacity: 0.75; cursor: progress; }
+        .spinner {
+            display: none;
+            width: 1rem; height: 1rem;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .submit.loading .spinner { display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .reset {
+            display: block;
+            margin: 0.9rem auto 0;
+            background: none;
+            border: 0;
+            font: inherit;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* Result panel */
+        .result { position: sticky; top: 1.5rem; padding: 1.75rem; border-width: 1px; }
+        .result h2 { margin: 0 0 1rem; font-size: 1.05rem; font-weight: 600; }
+        .result .status {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 1rem; border-radius: 8px;
+            font-weight: 600; font-size: 1.15rem; line-height: 1.3;
+        }
+        .result .icon {
+            flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%;
+            display: grid; place-items: center; color: #fff; font-size: 1.1rem;
+        }
+        .result p { color: var(--ink-soft); margin: 1rem 0 0; font-size: 0.95rem; }
+        .result ul { margin: 0.75rem 0 0; padding-left: 1.1rem; font-size: 0.95rem; }
+        .result li { margin-bottom: 0.35rem; }
+        .result .note {
+            margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--line);
+            font-size: 0.8rem; color: var(--ink-soft);
+        }
+
+        .result.empty .status { background: var(--paper); color: var(--ink-soft); font-weight: 500; font-size: 1rem; }
+        .result.empty .icon { background: var(--line); color: var(--ink-soft); }
+        .result.stay { border-color: var(--stay); }
+        .result.stay .status { background: var(--stay-bg); color: var(--stay); }
+        .result.stay .icon { background: var(--stay); }
+        .result.leave { border-color: var(--leave); }
+        .result.leave .status { background: var(--leave-bg); color: var(--leave); }
+        .result.leave .icon { background: var(--leave); }
+
+        .result.reveal { animation: reveal 0.45s ease-out; }
+        @keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+        @media (max-width: 860px) {
+            main { grid-template-columns: 1fr; }
+            .result { position: static; order: -1; }
+        }
+        @media (max-width: 520px) {
+            .grid { grid-template-columns: 1fr; }
+            form.card, .result { padding: 1.25rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .result.reveal, .spinner { animation: none; }
         }
     </style>
 </head>
 <body>
 
-<div class="form-container">
-    <h2>Customer Profile Form</h2>
-    <form action="#" method="POST">
-        
-        <!-- Credit Score -->
-        <div class="form-group">
-            <label desert for="credit_score">Credit Score</label>
-            <input type="number" id="credit_score" name="credit_score" min="300" max="850" placeholder="e.g., 650" required>
-        </div>
+<header class="topbar">
+    <div class="topbar-inner">
+        <strong>Customer Churn Prediction</strong>
+        <span>Logistic regression model</span>
+    </div>
+</header>
 
-        <!-- Country -->
-        <div class="form-group">
-            <label for="country">Country</label>
-            <select id="country" name="country" required>
-                <option value="" disabled selected>Select country</option>
-                <option value="France">France</option>
-                <option value="Germany">Germany</option>
-                <option value="Spain">Spain</option>
-            </select>
-        </div>
+<main>
+    <section class="intro">
+        <h1>Check a customer's churn risk</h1>
+        <p>Enter the customer's details to see whether the model expects them to leave the bank.</p>
+    </section>
 
-        <!-- Gender -->
-        <div class="form-group">
-            <label for="gender">Gender</label>
-            <select id="gender" name="gender" required>
-                <option value="" disabled selected>Select gender</option>
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
+    <form class="card" id="churn-form" action="#" method="POST" novalidate>
 
-        <!-- Age -->
-        <div class="form-group">
-            <label for="age">Age</label>
-            <input type="number" id="age" name="age" min="18" max="120" placeholder="e.g., 35" required>
-        </div>
+        <fieldset>
+            <legend>Customer profile</legend>
+            <div class="grid">
+                <div class="field">
+                    <label for="credit_score">Credit score</label>
+                    <input type="number" id="credit_score" name="credit_score" min="300" max="850" placeholder="e.g. 650" required>
+                    <span class="hint">Between 300 and 850</span>
+                    <span class="error-msg"></span>
+                </div>
+                <div class="field">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="18" max="120" placeholder="e.g. 35" required>
+                    <span class="hint">18 or older</span>
+                    <span class="error-msg"></span>
+                </div>
+                <div class="field">
+                    <label for="country">Country</label>
+                    <select id="country" name="country" required>
+                        <option value="" disabled selected>Select country</option>
+                        <option value="France">France</option>
+                        <option value="Germany">Germany</option>
+                        <option value="Spain">Spain</option>
+                    </select>
+                    <span class="error-msg"></span>
+                </div>
+                <div class="field">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Select gender</option>
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span class="error-msg"></span>
+                </div>
+            </div>
+        </fieldset>
 
-        <!-- Tenure -->
-        <div class="form-group">
-            <label for="tenure">Tenure (Years)</label>
-            <input type="number" id="tenure" name="tenure" min="0" max="100" placeholder="e.g., 5" required>
-        </div>
+        <fieldset>
+            <legend>Account details</legend>
+            <div class="grid">
+                <div class="field">
+                    <label for="tenure">Tenure (years)</label>
+                    <input type="number" id="tenure" name="tenure" min="0" max="100" placeholder="e.g. 5" required>
+                    <span class="hint">Years as a customer</span>
+                    <span class="error-msg"></span>
+                </div>
+                <div class="field">
+                    <label for="products_number">Number of products</label>
+                    <input type="number" id="products_number" name="products_number" min="1" max="10" placeholder="e.g. 2" required>
+                    <span class="hint">Between 1 and 10</span>
+                    <span class="error-msg"></span>
+                </div>
+                <div class="field">
+                    <label for="balance">Account balance</label>
+                    <input type="number" id="balance" name="balance" step="0.01" min="0" placeholder="e.g. 50000.00" required>
+                    <span class="error-msg"></span>
+                </div>
+                <div class="field">
+                    <label for="estimated_salary">Estimated salary</label>
+                    <input type="number" id="estimated_salary" name="estimated_salary" step="0.01" min="0" placeholder="e.g. 85000.00" required>
+                    <span class="error-msg"></span>
+                </div>
+                <div class="field">
+                    <label for="credit_card">Has a credit card</label>
+                    <select id="credit_card" name="credit_card" required>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="active_member">Is an active member</label>
+                    <select id="active_member" name="active_member" required>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
 
-        <!-- Balance -->
-        <div class="form-group">
-            <label for="balance">Account Balance</label>
-            <input type="number" id="balance" name="balance" step="0.01" min="0" placeholder="e.g., 50000.00" required>
-        </div>
-
-        <!-- Number of Products -->
-        <div class="form-group">
-            <label for="products_number">Number of Products</label>
-            <input type="number" id="products_number" name="products_number" min="1" max="10" placeholder="e.g., 2" required>
-        </div>
-
-        <!-- Estimated Salary -->
-        <div class="form-group">
-            <label for="estimated_salary">Estimated Salary</label>
-            <input type="number" id="estimated_salary" name="estimated_salary" step="0.01" min="0" placeholder="e.g., 85000.00" required>
-        </div>
-
-        <!-- Has Credit Card (Explicit 0/1 Selection) -->
-        <div class="form-group">
-            <label for="credit_card">Has Credit Card?</label>
-            <select id="credit_card" name="credit_card" required>
-                <option value="1">Yes (1)</option>
-                <option value="0">No (0)</option>
-            </select>
-        </div>
-
-        <!-- Is Active Member (Explicit 0/1 Selection) -->
-        <div class="form-group">
-            <label for="active_member">Is Active Member?</label>
-            <select id="active_member" name="active_member" required>
-                <option value="1">Yes (1)</option>
-                <option value="0">No (0)</option>
-            </select>
-        </div>
-
-        <button type="submit">Submit Data</button>
+        <button type="submit" class="submit" id="submit-btn">
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="label">Predict churn</span>
+        </button>
+        <button type="button" class="reset" id="reset-btn">Clear form</button>
     </form>
 
-    <!-- Prediction Output Block -->
- 
-    <div class="prediction-output">
-        <h1>Prediction Result: {{prediction}}</h1>
-    </div>
-   
-</div>
+    <!--
+        Flask puts the model output (0 or 1) into data-prediction.
+        Before the first prediction the attribute is empty and the panel shows its idle state.
+    -->
+    <aside class="card result empty" id="result" data-prediction="{{ prediction | default('') }}" aria-live="polite">
+        <h2>Prediction</h2>
+        <div class="status">
+            <span class="icon" aria-hidden="true">?</span>
+            <span id="result-title">No prediction yet</span>
+        </div>
+        <p id="result-text">Fill in the form and select Predict churn to see the result here.</p>
+        <ul id="result-actions" hidden></ul>
+        <div class="note">This is a statistical estimate from a logistic regression model. Use it alongside your own judgement.</div>
+    </aside>
+</main>
+
+<script>
+(function () {
+    "use strict";
+
+    var STORAGE_KEY = "churn_form_values";
+    var form = document.getElementById("churn-form");
+    var submitBtn = document.getElementById("submit-btn");
+    var resetBtn = document.getElementById("reset-btn");
+    var panel = document.getElementById("result");
+
+    /* ---------- Result display (0 = stays, 1 = leaves) ---------- */
+    var OUTCOMES = {
+        0: {
+            cls: "stay",
+            icon: "\u2713",
+            title: "Customer is likely to stay",
+            text: "The model predicts this customer will not leave the bank.",
+            actions: [
+                "Keep the current level of service",
+                "Check in at regular intervals to maintain the relationship"
+            ]
+        },
+        1: {
+            cls: "leave",
+            icon: "!",
+            title: "Customer is likely to leave",
+            text: "The model predicts this customer will exit the bank.",
+            actions: [
+                "Contact the customer soon to understand their needs",
+                "Consider a retention offer or a review of their products",
+                "Prioritise this account for follow-up"
+            ]
+        }
+    };
+
+    function parsePrediction(raw) {
+        // Accepts "0", "1", or formats such as "[1]" or "[0]" from numpy output.
+        var match = String(raw == null ? "" : raw).match(/(^|[^0-9.])([01])($|[^0-9.])/);
+        return match ? Number(match[2]) : null;
+    }
+
+    function showResult(value) {
+        var outcome = OUTCOMES[value];
+        if (!outcome) return;
+
+        panel.className = "card result reveal " + outcome.cls;
+        panel.querySelector(".icon").textContent = outcome.icon;
+        document.getElementById("result-title").textContent = outcome.title;
+        document.getElementById("result-text").textContent = outcome.text;
+
+        var list = document.getElementById("result-actions");
+        list.innerHTML = "";
+        outcome.actions.forEach(function (item) {
+            var li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+        });
+        list.hidden = false;
+
+        if (window.matchMedia("(max-width: 860px)").matches) {
+            panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }
+
+    /* ---------- Validation ---------- */
+    function validateField(el) {
+        var field = el.closest(".field");
+        var msg = field.querySelector(".error-msg");
+        var text = "";
+
+        if (el.validity.valueMissing) {
+            text = "This field is required.";
+        } else if (el.validity.rangeUnderflow) {
+            text = "Enter a value of " + el.min + " or more.";
+        } else if (el.validity.rangeOverflow) {
+            text = "Enter a value of " + el.max + " or less.";
+        } else if (el.validity.badInput) {
+            text = "Enter a valid number.";
+        }
+
+        field.classList.toggle("invalid", Boolean(text));
+        if (msg) msg.textContent = text;
+        return !text;
+    }
+
+    var controls = Array.prototype.slice.call(form.querySelectorAll("input, select"));
+
+    controls.forEach(function (el) {
+        el.addEventListener("blur", function () { validateField(el); });
+        el.addEventListener("input", function () {
+            if (el.closest(".field").classList.contains("invalid")) validateField(el);
+        });
+    });
+
+    /* ---------- Keep entered values after the page reloads ---------- */
+    function saveValues() {
+        try {
+            var data = {};
+            controls.forEach(function (el) { data[el.name] = el.value; });
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) { /* storage unavailable: ignore */ }
+    }
+
+    function restoreValues() {
+        try {
+            var saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+            if (!saved) return;
+            controls.forEach(function (el) {
+                if (saved[el.name] !== undefined) el.value = saved[el.name];
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    /* ---------- Events ---------- */
+    form.addEventListener("submit", function (event) {
+        var firstInvalid = null;
+        controls.forEach(function (el) {
+            if (!validateField(el) && !firstInvalid) firstInvalid = el;
+        });
+
+        if (firstInvalid) {
+            event.preventDefault();
+            firstInvalid.focus();
+            return;
+        }
+
+        saveValues();
+        submitBtn.disabled = true;
+        submitBtn.classList.add("loading");
+        submitBtn.querySelector(".label").textContent = "Predicting\u2026";
+    });
+
+    resetBtn.addEventListener("click", function () {
+        form.reset();
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        form.querySelectorAll(".field.invalid").forEach(function (f) { f.classList.remove("invalid"); });
+        panel.className = "card result empty";
+        panel.querySelector(".icon").textContent = "?";
+        document.getElementById("result-title").textContent = "No prediction yet";
+        document.getElementById("result-text").textContent =
+            "Fill in the form and select Predict churn to see the result here.";
+        document.getElementById("result-actions").hidden = true;
+    });
+
+    // Restore the browser's back/forward cache state so the button is never stuck.
+    window.addEventListener("pageshow", function () {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("loading");
+        submitBtn.querySelector(".label").textContent = "Predict churn";
+    });
+
+    /* ---------- On load ---------- */
+    restoreValues();
+    var prediction = parsePrediction(panel.dataset.prediction);
+    if (prediction !== null) showResult(prediction);
+})();
+</script>
 
 </body>
 </html>
